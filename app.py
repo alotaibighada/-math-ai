@@ -1,20 +1,19 @@
 import io, re
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from PIL import Image
 import numpy as np
 import cv2
 import pytesseract
 from sympy import symbols, Eq, solve, simplify, sympify
 
+# -----------------------------
+# إنشاء التطبيق
+# -----------------------------
 app = FastAPI(title="Math AI API")
 
-from fastapi.staticfiles import StaticFiles
-
-# خدمة الملفات الثابتة (index.html والـ frontend)
-app.mount("/", StaticFiles(directory=".", html=True), name="static")
-
-
+# السماح بالوصول من أي مصدر
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,6 +22,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# -----------------------------
+# خدمة الملفات الثابتة (index.html + frontend)
+# -----------------------------
+app.mount("/", StaticFiles(directory=".", html=True), name="static")
+
+# -----------------------------
+# دوال المعالجة وحل المعادلات
+# -----------------------------
 def preprocess_image(pil_image):
     img = np.array(pil_image.convert("RGB"))
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
@@ -40,6 +47,7 @@ def fix_implied_mul(expr: str) -> str:
 def solve_expression_text(text: str):
     cleaned = text.strip().replace("−","-").replace("^","**")
     cleaned = fix_implied_mul(cleaned)
+    x = symbols("x")
     try:
         if cleaned.count("=") > 1:
             return {"error": "أكثر من علامة مساواة"}
@@ -60,6 +68,9 @@ def solve_expression_text(text: str):
     except Exception as e:
         return {"error": f"تعذر الحل: {str(e)}"}
 
+# -----------------------------
+# API حل الصور
+# -----------------------------
 @app.post("/solve-image")
 async def solve_image(file: UploadFile = File(...)):
     if file.content_type.split("/")[0] != "image":
@@ -77,6 +88,9 @@ async def solve_image(file: UploadFile = File(...)):
     result = solve_expression_text(ocr_text)
     return {"ok": True, "extracted": ocr_text, "result": result}
 
-@app.get("/")
+# -----------------------------
+# حالة السيرفر
+# -----------------------------
+@app.get("/api-status")
 def read_root():
-    return {"msg": "Math AI API running"}
+    return {"msg":"Math AI API running"}
