@@ -1,68 +1,57 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math AI – المساعد الذكي</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 20px;
-            background: #f0f0f0;
-        }
-        h1 { color: #333; }
-        input, button { font-size: 1.2em; padding: 10px; margin: 5px; }
-        #result { margin-top: 20px; font-size: 1.4em; color: #006400; }
-        #error { margin-top: 20px; font-size: 1.4em; color: #B22222; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math AI – المساعد الذكي</title>
+<style>
+body { font-family: Arial; text-align:center; padding:20px; background:#f0f0f0; }
+h1 { color:#333; }
+input, button { font-size:1.2em; padding:10px; margin:5px; }
+#result { margin-top:20px; font-size:1.4em; color:#006400; }
+#error { margin-top:20px; font-size:1.4em; color:#B22222; }
+</style>
 </head>
 <body>
-    <h1>🧮 Math AI – المساعد الذكي</h1>
+<h1>🧮 Math AI – المساعد الذكي</h1>
 
-    <h2>حل المعادلات من صورة</h2>
-    <input type="file" accept="image/*" capture="environment" id="imageInput">
-    <button onclick="solveImage()">حل</button>
+<h2>حل المعادلات من صورة</h2>
+<input type="file" accept="image/*" capture="environment" id="imageInput">
+<button onclick="solveImage()">حل</button>
 
-    <div id="result"></div>
-    <div id="error"></div>
+<div id="result"></div>
+<div id="error"></div>
 
-    <script>
-        async function solveImage() {
-            const input = document.getElementById('imageInput');
-            const file = input.files[0];
-            if (!file) return alert("اختر صورة أولاً");
+<script>
+async function solveImage() {
+    const input = document.getElementById('imageInput');
+    const file = input.files[0];
+    if(!file) return alert("اختر صورة أولاً");
 
-            const fd = new FormData();
-            fd.append('file', file);
+    const fd = new FormData();
+    fd.append('file', file);
 
-            document.getElementById('result').innerText = "⏳ جاري المعالجة...";
-            document.getElementById('error').innerText = "";
+    document.getElementById('result').innerText = "⏳ جاري المعالجة...";
+    document.getElementById('error').innerText = "";
 
-            try {
-                const res = await fetch('/solve-image', { method: 'POST', body: fd });
-                const data = await res.json();
-
-                if (data.ok) {
-                    let text = `📷 المعادلة المكتشفة: ${data.extracted}\n`;
-                    if (data.result.error) {
-                        document.getElementById('error').innerText = data.result.error;
-                    } else if (data.result.type === "equation") {
-                        text += `✅ الحل: ${data.result.solution}`;
-                    } else if (data.result.type === "expression") {
-                        text += `📊 النتيجة: ${data.result.value}`;
-                    } else if (data.result.type === "boolean") {
-                        text += data.result.equal ? "✅ المعادلة صحيحة" : "❌ المعادلة خاطئة";
-                    }
-                    document.getElementById('result').innerText = text;
-                } else {
-                    document.getElementById('error').innerText = data.message;
-                }
-            } catch (err) {
-                document.getElementById('error').innerText = "❌ حدث خطأ أثناء المعالجة";
-                console.error(err);
-            }
+    try {
+        const res = await fetch('/solve-image', {method:'POST', body:fd});
+        const data = await res.json();
+        if(data.ok) {
+            let text = `📷 المعادلة المكتشفة: ${data.extracted}\n`;
+            if(data.result.error) document.getElementById('error').innerText = data.result.error;
+            else if(data.result.type==="equation") text += `✅ الحل: ${data.result.solution}`;
+            else if(data.result.type==="expression") text += `📊 النتيجة: ${data.result.value}`;
+            else if(data.result.type==="boolean") text += data.result.equal?"✅ المعادلة صحيحة":"❌ المعادلة خاطئة";
+            document.getElementById('result').innerText = text;
+        } else {
+            document.getElementById('error').innerText = data.message;
         }
-    </script>
+    } catch(err) {
+        document.getElementById('error').innerText = "❌ حدث خطأ أثناء المعالجة";
+        console.error(err);
+    }
+}
+</script>
 </body>
 </html>
