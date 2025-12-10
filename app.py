@@ -9,6 +9,12 @@ from sympy import symbols, Eq, solve, simplify, sympify
 
 app = FastAPI(title="Math AI API")
 
+from fastapi.staticfiles import StaticFiles
+
+# خدمة الملفات الثابتة (index.html والـ frontend)
+app.mount("/", StaticFiles(directory=".", html=True), name="static")
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
