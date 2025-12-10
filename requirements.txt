@@ -5,4 +5,4 @@ pillow
 opencv-python
 pytesseract
 sympy
-starlette
+numpy
