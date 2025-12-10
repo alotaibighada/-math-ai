@@ -1,76 +1,68 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Math AI - كاميرا المعادلات</title>
-<style>
-body { font-family:sans-serif; padding:12px; background:#f8fafc; direction:rtl; }
-#video { width:100%; max-width:640px; border-radius:8px; background:#000; }
-#canvas { display:none; }
-.btn { padding:10px 14px; border-radius:8px; background:#0b69ff; color:white; border:none; font-weight:600; }
-.btn-secondary { background:#6b7280; }
-.result { background:#fff; padding:10px; border-radius:8px; margin-top:12px; box-shadow:0 2px 6px rgba(0,0,0,0.08); }
-label { display:block; margin-bottom:6px; font-weight:700; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math AI – المساعد الذكي</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        h1 { color: #333; }
+        input, button { font-size: 1.2em; padding: 10px; margin: 5px; }
+        #result { margin-top: 20px; font-size: 1.4em; color: #006400; }
+        #error { margin-top: 20px; font-size: 1.4em; color: #B22222; }
+    </style>
 </head>
 <body>
-<h2>📷 Math AI - صوّر المعادلة واحصل على الحل</h2>
-<div>
-<label>عرض الكاميرا</label>
-<video id="video" playsinline autoplay></video>
-<canvas id="canvas"></canvas>
-</div>
-<div style="margin-top:8px;">
-<button id="captureBtn" class="btn">التقاط صورة</button>
-<button id="sendBtn" class="btn btn-secondary">إرسال للحل</button>
-</div>
-<div id="preview" style="margin-top:12px;"></div>
-<div id="output" class="result" style="display:none;"></div>
-<script>
-const video = document.getElementById('video');
-const canvas = document.getElementById('canvas');
-const captureBtn = document.getElementById('captureBtn');
-const sendBtn = document.getElementById('sendBtn');
-const preview = document.getElementById('preview');
-const output = document.getElementById('output');
+    <h1>🧮 Math AI – المساعد الذكي</h1>
 
-let stream;
-async function startCamera(){
-  try { stream = await navigator.mediaDevices.getUserMedia({ video:{facingMode:"environment"}, audio:false }); video.srcObject = stream; }
-  catch(e){ alert("تعذر الوصول إلى الكاميرا: "+e.message);}
-}
-startCamera();
+    <h2>حل المعادلات من صورة</h2>
+    <input type="file" accept="image/*" capture="environment" id="imageInput">
+    <button onclick="solveImage()">حل</button>
 
-captureBtn.addEventListener('click', () => {
-  const w = video.videoWidth;
-  const h = video.videoHeight;
-  canvas.width = w; canvas.height = h;
-  const ctx = canvas.getContext('2d'); ctx.drawImage(video,0,0,w,h);
-  const dataUrl = canvas.toDataURL('image/jpeg',0.9);
-  preview.innerHTML = `<img src="${dataUrl}" style="width:100%; max-width:640px; border-radius:8px;" />`;
-  output.style.display='none';
-});
+    <div id="result"></div>
+    <div id="error"></div>
 
-sendBtn.addEventListener('click', async () => {
-  if(!canvas.width){ alert("أولاً: التقط صورة"); return; }
-  output.style.display='block'; output.innerText='⏳ جاري الإرسال والمعالجة...';
-  canvas.toBlob(async (blob) => {
-    const fd = new FormData(); fd.append('file', blob, 'capture.jpg');
-    try {
-      const res = await fetch('http://localhost:8000/solve-image', {method:'POST', body:fd});
-      const data = await res.json();
-      if(!data.ok){ output.innerHTML=`<b>خطأ:</b> ${data.message||JSON.stringify(data)}`; return;}
-      const ex = data.extracted||''; const result = data.result||{};
-      let html = `<h4>النص المستخرج:</h4><div>${ex.replace(/\n/g,'<br/>')}</div><hr/>`;
-      if(result.error) html+=`<div><b>تعذر الحل:</b> ${result.error}</div>`;
-      else if(result.type==='equation'){ html+=`<div><b>المعادلة بعد التبسيط:</b> ${result.fixed}</div>`; html+=`<div><b>الحل:</b> ${JSON.stringify(result.solution)}</div>`;}
-      else if(result.type==='expression') html+=`<div><b>قيمة التعبير:</b> ${result.value}</div>`; 
-      else if(result.type==='boolean') html+=`<div><b>تقييم:</b> ${result.equal}</div>`;
-      else html+=`<div>نتيجة: ${JSON.stringify(result)}</div>`; output.innerHTML=html;
-    } catch(err){ output.innerHTML=`<b>خطأ بالاتصال:</b> ${err.message}`;}
-  },'image/jpeg',0.9);
-});
-</script>
+    <script>
+        async function solveImage() {
+            const input = document.getElementById('imageInput');
+            const file = input.files[0];
+            if (!file) return alert("اختر صورة أولاً");
+
+            const fd = new FormData();
+            fd.append('file', file);
+
+            document.getElementById('result').innerText = "⏳ جاري المعالجة...";
+            document.getElementById('error').innerText = "";
+
+            try {
+                const res = await fetch('/solve-image', { method: 'POST', body: fd });
+                const data = await res.json();
+
+                if (data.ok) {
+                    let text = `📷 المعادلة المكتشفة: ${data.extracted}\n`;
+                    if (data.result.error) {
+                        document.getElementById('error').innerText = data.result.error;
+                    } else if (data.result.type === "equation") {
+                        text += `✅ الحل: ${data.result.solution}`;
+                    } else if (data.result.type === "expression") {
+                        text += `📊 النتيجة: ${data.result.value}`;
+                    } else if (data.result.type === "boolean") {
+                        text += data.result.equal ? "✅ المعادلة صحيحة" : "❌ المعادلة خاطئة";
+                    }
+                    document.getElementById('result').innerText = text;
+                } else {
+                    document.getElementById('error').innerText = data.message;
+                }
+            } catch (err) {
+                document.getElementById('error').innerText = "❌ حدث خطأ أثناء المعالجة";
+                console.error(err);
+            }
+        }
+    </script>
 </body>
 </html>
