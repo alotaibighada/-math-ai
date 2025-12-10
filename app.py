@@ -8,9 +8,6 @@ import cv2
 import pytesseract
 from sympy import symbols, Eq, solve, simplify, sympify
 
-# -----------------------------
-# إنشاء التطبيق
-# -----------------------------
 app = FastAPI(title="Math AI API")
 
 # السماح بالوصول من أي مصدر
@@ -22,9 +19,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# -----------------------------
 # خدمة الملفات الثابتة (index.html + frontend)
-# -----------------------------
 app.mount("/", StaticFiles(directory=".", html=True), name="static")
 
 # -----------------------------
@@ -88,9 +83,6 @@ async def solve_image(file: UploadFile = File(...)):
     result = solve_expression_text(ocr_text)
     return {"ok": True, "extracted": ocr_text, "result": result}
 
-# -----------------------------
-# حالة السيرفر
-# -----------------------------
 @app.get("/api-status")
 def read_root():
     return {"msg":"Math AI API running"}
